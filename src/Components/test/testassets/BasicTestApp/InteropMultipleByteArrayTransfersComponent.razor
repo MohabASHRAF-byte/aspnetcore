@@ -42,7 +42,7 @@
     {
         try
         {
-            await LoadByteArray();
+            await LoadByteArray(42);
             log = "Success: Got 1 byte array.";
             SuccessOne = true;
         }
@@ -59,8 +59,8 @@
         try
         {
             await Task.WhenAll(
-                    LoadByteArray(),
-                    LoadByteArray()
+                    LoadByteArray(10),
+                    LoadByteArray(20)
                 );
             log = "Success: Got 2 byte arrays.";
             SuccessTwo = true;
@@ -76,14 +76,19 @@
 
     private async Task StartLoadingMany()
     {
-        var tasks = Enumerable.Range(0, 10000).Select(_ => LoadByteArray()).ToArray();
+        var tasks = Enumerable.Range(0, 10000).Select(i => LoadByteArray(i)).ToArray();
         await Task.WhenAll(tasks);
         log = "Success: Got many byte arrays.";
         SuccessMany = true;
     }
 
-    private Task<byte[]> LoadByteArray()
+    private async Task LoadByteArray(int n)
     {
-        return JSRuntime.InvokeAsync<byte[]>("jsInteropTests.getLargeByteArray").AsTask();
+        byte[] arr = await JSRuntime.InvokeAsync<byte[]>("jsInteropTests.getLargeByteArray", n).AsTask();
+
+        if (arr[0] != n)
+        {
+            throw new InvalidOperationException($"Expected {n} but got {arr[0]}");
+        }
     }
 }
